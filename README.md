@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ReBoX
 
-## Getting Started
+> **Donnez une seconde vie aux cartons.**
+> Une marketplace écologique, économique et locale pour l'échange de cartons entre professionnels et particuliers.
 
-First, run the development server:
+ReBoX est une application web (et compatible mobile via Capacitor) qui facilite la réutilisation des cartons. Conçue comme le "Vinted" ou "Le Bon Coin" du carton, elle permet aux entreprises de se débarrasser de leurs surplus et aux particuliers (ou autres entreprises) de trouver des emballages à moindre coût.
+
+![ReBoX Banner](https://placehold.co/1200x400/008753/white?text=ReBoX+Marketplace)
+
+## 🚀 Fonctionnalités Clés
+
+-   **🔍 Recherche Géolocalisée** : Trouvez des cartons autour de vous grâce à une carte interactive (Leaflet).
+-   **👤 Profils Différenciés** :
+    -   **Entreprises** : Vendez ou donnez vos lots de cartons, gérez vos annonces.
+    -   **Particuliers** : Achetez des lots adaptés à vos besoins (déménagement, envoi).
+-   **💳 Paiements Sécurisés** : Intégration complète avec **Stripe** pour les transactions.
+-   **🔐 Authentification Robuste** : Inscription et connexion via **Supabase Auth**.
+-   **📱 Design Premium & Mobile-First** : Interface soignée utilisant Chakra UI, avec des animations fluides et une UX moderne.
+-   **🏆 Gamification** : Système de points, badges (Écolo, Super Vendeur) et classements pour inciter au recyclage.
+
+## 🛠 Stack Technique
+
+-   **Frontend** : [Next.js 14](https://nextjs.org/) (App Router), TypeScript, React.
+-   **Styling** : [Chakra UI](https://chakra-ui.com/) + TailwindCSS (pour certaines utilitaires).
+-   **Backend & Base de données** : [Supabase](https://supabase.com/) (PostgreSQL, Auth, Storage).
+-   **Paiement** : [Stripe](https://stripe.com/).
+-   **Cartes** : [React Leaflet](https://react-leaflet.js.org/).
+-   **Mobile** : [Capacitor](https://capacitorjs.com/) (prêt pour déploiement iOS/Android).
+
+## 🏁 Pour Commencer
+
+### Prérequis
+
+-   Node.js 18+
+-   Compte Supabase
+-   Compte Stripe (pour les paiements)
+
+### Installation
+
+1.  **Cloner le projet**
+    ```bash
+    git clone https://github.com/leroux-loic/Rebox.git
+    cd Rebox
+    ```
+
+2.  **Installer les dépendances**
+    ```bash
+    npm install
+    ```
+
+3.  **Configurer les variables d'environnement**
+    Copiez le fichier `.env.example` en `.env` et remplissez les valeurs.
+    ```bash
+    cp .env.example .env
+    ```
+
+4.  **Lancer le serveur de développement**
+    ```bash
+    npm run dev
+    ```
+    Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur.
+
+## ⚙️ Configuration Environnement
+
+Voir `.env.example` pour la liste complète des clés requises :
+-   `NEXT_PUBLIC_SUPABASE_URL` & `ANON_KEY` : Pour l'API Supabase.
+-   `STRAIPE_SECRET_KEY` & `PUBLISHABLE_KEY` : Pour le checkout.
+-   `NEXT_PUBLIC_BASE_URL` : URL de l'application (http://localhost:3000 en dev, https://wis.interlumos.fr en prod).
+
+## 📱 Mobile (Capacitor)
+
+Pour synchroniser et lancer sur mobile :
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npx cap sync
+npx cap open android # ou ios
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🤝 Contribution
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Les Pull Requests sont les bienvenues. Pour les changements majeurs, veuillez d'abord ouvrir une issue pour discuter de ce que vous souhaitez changer.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1.  Forkez le projet
+2.  Créez votre branche (`git checkout -b feature/AmazingFeature`)
+3.  Commitez vos changements (`git commit -m 'Add some AmazingFeature'`)
+4.  Pushez vers la branche (`git push origin feature/AmazingFeature`)
+5.  Ouvrez une Pull Request
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Développé avec ❤️ pour l'environnement.
