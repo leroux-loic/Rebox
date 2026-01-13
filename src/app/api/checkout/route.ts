@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase/client" // Note: In a real app, use sup
 
 // Initialize Stripe with a placeholder if key is missing to avoid crash on build
 const stripe = process.env.STRIPE_SECRET_KEY
-    ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" })
+    ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-12-18.acacia" as any })
     : null
 
 export async function POST(req: Request) {

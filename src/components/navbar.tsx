@@ -2,17 +2,20 @@
 
 import Link from "next/link"
 import { useAuth } from "@/components/auth-provider"
-import { Box, Flex, Button, HStack, Text, Icon, Menu, MenuButton, MenuList, MenuItem, Avatar, IconButton, useColorModeValue } from "@chakra-ui/react"
-import { LogOut, Package, User, MessageCircle, LayoutDashboard } from "lucide-react"
+import { Box, Flex, Button, HStack, VStack, Text, Icon, Menu, MenuButton, MenuList, MenuItem, Avatar, IconButton, useColorModeValue, InputGroup, InputLeftElement, Input, Badge, Container } from "@chakra-ui/react"
+import { LogOut, Package, User, MessageCircle, LayoutDashboard, Search, PlusSquare, Heart, Bell, Menu as MenuIcon } from "lucide-react"
 import { NotificationsMenu } from "@/components/notifications-menu"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
+import { usePathname } from "next/navigation"
 
 export function Navbar() {
     const { user, signOut } = useAuth()
+    const pathname = usePathname()
     const [role, setRole] = useState<string | null>(null)
-    const bg = useColorModeValue('white', 'gray.800')
-    const borderColor = useColorModeValue('gray.200', 'gray.700')
+
+    const bg = useColorModeValue('white', 'gray.900')
+    const borderColor = useColorModeValue('gray.100', 'gray.800')
 
     useEffect(() => {
         if (user) {
@@ -28,78 +31,117 @@ export function Navbar() {
             .eq('id', user.id)
             .single()
 
-        if (data) {
-            setRole((data as any).role)
-        }
+        if (data) setRole((data as any).role)
     }
 
     return (
         <Box
             as="nav"
-            bg={useColorModeValue('whiteAlpha.800', 'gray.800')}
+            bg={bg}
             borderBottom="1px"
             borderColor={borderColor}
             position="sticky"
             top="0"
-            zIndex="sticky"
-            backdropFilter="blur(10px)"
+            zIndex="999"
+            shadow="sm"
         >
-            <Flex h={16} alignItems="center" justifyContent="space-between" maxW="container.xl" mx="auto" px={4}>
-                <Link href="/" passHref>
-                    <HStack spacing={2} cursor="pointer">
-                        <Icon as={Package} w={6} h={6} color="brand.500" />
-                        <Text fontSize="xl" fontWeight="bold" color="brand.600">ReBox</Text>
-                    </HStack>
-                </Link>
+            <Container maxW="container.xl" px={4}>
+                <Flex h={{ base: 16, md: 20 }} alignItems="center" justifyContent="space-between" gap={8}>
+                    {/* Logo Section */}
+                    <Link href="/" passHref>
+                        <HStack spacing={2} cursor="pointer" align="center" role="group">
+                            <Flex bg="brand.500" w={10} h={10} borderRadius="lg" align="center" justify="center" shadow="md">
+                                <Icon as={Package} w={6} h={6} color="white" />
+                            </Flex>
+                            <Box>
+                                <Text fontSize="xl" fontWeight="900" color="brand.600" lineHeight="1">ReBox</Text>
+                                <Text fontSize="xs" fontWeight="medium" color="gray.400" letterSpacing="wide">PRO</Text>
+                            </Box>
+                        </HStack>
+                    </Link>
 
-                <HStack spacing={4}>
-                    {user ? (
-                        <>
-                            <Link href={role === 'company' ? "/dashboard/company" : "/dashboard/individual"}>
-                                <Button variant="ghost" leftIcon={<Icon as={LayoutDashboard} />}>
-                                    Tableau de bord
-                                </Button>
+                    {/* Desktop: Middle Search Bar */}
+                    <Box display={{ base: "none", lg: "block" }} flex={1} maxW="600px">
+                        <InputGroup size="lg">
+                            <InputLeftElement pointerEvents="none">
+                                <Icon as={Search} color="gray.400" mt={1} />
+                            </InputLeftElement>
+                            <Input
+                                placeholder="Rechercher des cartons, rouleaux, palettes..."
+                                bg="gray.50"
+                                border="1px solid"
+                                borderColor="gray.200"
+                                _focus={{ bg: "white", borderColor: "brand.500", boxShadow: "0 0 0 1px var(--chakra-colors-brand-500)" }}
+                                borderRadius="full"
+                                fontSize="sm"
+                            />
+                        </InputGroup>
+                    </Box>
+
+                    {/* Desktop Actions */}
+                    <HStack spacing={4} display={{ base: "none", md: "flex" }} align="center">
+                        <Link href="/dashboard/company/create">
+                            <Button
+                                leftIcon={<PlusSquare size={18} />}
+                                colorScheme="brand"
+                                variant="solid"
+                                size="md"
+                                borderRadius="full"
+                                fontWeight="bold"
+                                px={6}
+                                boxShadow="md"
+                                _hover={{ transform: "translateY(-1px)", boxShadow: "lg" }}
+                            >
+                                Déposer
+                            </Button>
+                        </Link>
+
+                        <HStack spacing={1}>
+                            <Link href="/favorites">
+                                <IconButton aria-label="Favoris" icon={<Heart size={20} />} variant="ghost" borderRadius="full" color="gray.500" />
                             </Link>
-                            <Link href="/messages">
-                                <Button variant="ghost" leftIcon={<Icon as={MessageCircle} />}>
-                                    Messages
-                                </Button>
-                            </Link>
+                            {user && (
+                                <Link href="/messages">
+                                    <IconButton aria-label="Messages" icon={<MessageCircle size={20} />} variant="ghost" borderRadius="full" color="gray.500" />
+                                </Link>
+                            )}
+                        </HStack>
 
-                            <NotificationsMenu />
-
+                        {/* Auth Section */}
+                        {user ? (
                             <Menu>
-                                <MenuButton
-                                    as={Button}
-                                    rounded={'full'}
-                                    variant={'link'}
-                                    cursor={'pointer'}
-                                    minW={0}>
-                                    <Avatar
-                                        size={'sm'}
-                                        src={'https://images.unsplash.com/photo-1493666438817-866a91353ca9?ixlib=rb-0.3.5&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&s=b616b2c5b373a80ffc9636ba24f7a4a9'}
-                                    />
+                                <MenuButton as={Button} variant="ghost" borderRadius="full" p={1} pr={4}>
+                                    <HStack spacing={3}>
+                                        <Avatar size="sm" name={user.email || undefined} src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} />
+                                        <VStack spacing={0} align="start" display={{ base: "none", xl: "flex" }}>
+                                            <Text fontSize="sm" fontWeight="bold">{role === 'company' ? 'Entreprise' : 'Particulier'}</Text>
+                                        </VStack>
+                                    </HStack>
                                 </MenuButton>
-                                <MenuList>
+                                <MenuList borderRadius="xl" shadow="lg" p={2}>
                                     <Link href="/profile">
-                                        <MenuItem icon={<Icon as={User} />}>Mon Profil</MenuItem>
+                                        <MenuItem borderRadius="md" icon={<Icon as={User} />}>Mon Compte</MenuItem>
                                     </Link>
-                                    <MenuItem icon={<Icon as={LogOut} />} onClick={signOut}>Se déconnecter</MenuItem>
+                                    <Link href={role === 'company' ? "/dashboard/company" : "/dashboard/individual"}>
+                                        <MenuItem borderRadius="md" icon={<Icon as={LayoutDashboard} />}>Tableau de Bord</MenuItem>
+                                    </Link>
+                                    <MenuItem borderRadius="md" icon={<Icon as={LogOut} />} onClick={signOut} color="red.500">Se déconnecter</MenuItem>
                                 </MenuList>
                             </Menu>
-                        </>
-                    ) : (
-                        <>
+                        ) : (
                             <Link href="/login">
-                                <Button variant="ghost">Se connecter</Button>
+                                <Button variant="ghost" leftIcon={<User size={18} />}>Se connecter</Button>
                             </Link>
-                            <Link href="/signup">
-                                <Button colorScheme="brand">S'inscrire</Button>
-                            </Link>
-                        </>
-                    )}
-                </HStack>
-            </Flex>
+                        )}
+                    </HStack>
+
+                    {/* Mobile Menu Icon */}
+                    <HStack display={{ base: "flex", md: "none" }} spacing={2}>
+                        {user && <NotificationsMenu />}
+                        <IconButton aria-label="Menu" icon={<MenuIcon />} variant="ghost" />
+                    </HStack>
+                </Flex>
+            </Container>
         </Box >
     )
 }

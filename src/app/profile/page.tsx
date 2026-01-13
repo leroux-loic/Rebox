@@ -3,34 +3,28 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { useAuth } from "@/components/auth-provider"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ListingCard } from "@/components/listing-card"
+import { Box, Button, Container, Flex, Heading, Text, VStack, HStack, Icon, Avatar, SimpleGrid, Card, CardBody, Badge, useColorModeValue, Divider, Tab, TabList, TabPanel, TabPanels, Tabs, Input, FormControl, FormLabel, Switch, useToast } from "@chakra-ui/react"
+import { User, LogOut, Package, ShieldCheck, MapPin, Settings as SettingsIcon, Heart, Star, CreditCard } from "lucide-react"
 import Link from "next/link"
-import { StarRating } from "@/components/star-rating"
-import { VerifiedBadge } from "@/components/verified-badge"
+import { ListingCard } from "@/components/listing-card"
 
 export default function ProfilePage() {
-    const { user } = useAuth()
+    const { user, signOut } = useAuth()
+    const toast = useToast()
     const [profile, setProfile] = useState<any>(null)
     const [orders, setOrders] = useState<any[]>([])
-    const [sales, setSales] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
-    const [saving, setSaving] = useState(false)
-    const [averageRating, setAverageRating] = useState<number | null>(null)
-    const [reviewCount, setReviewCount] = useState(0)
 
-    // Form state
-    const [companyName, setCompanyName] = useState("")
-    const [siret, setSiret] = useState("")
-    const [headquartersAddress, setHeadquartersAddress] = useState("")
-    const [pickupAddress, setPickupAddress] = useState("")
-    const [phone, setPhone] = useState("")
-    const [website, setWebsite] = useState("")
-    const [sameAddress, setSameAddress] = useState(false)
+    // Edit Mode State
+    const [isEditing, setIsEditing] = useState(false)
+    const [editForm, setEditForm] = useState<any>({
+        company_name: "",
+        headquarters_address: "",
+        phone: ""
+    })
+
+    const bgColor = useColorModeValue("gray.50", "gray.900")
+    const cardBg = useColorModeValue("white", "gray.800")
 
     useEffect(() => {
         if (user) {
@@ -39,304 +33,198 @@ export default function ProfilePage() {
     }, [user])
 
     const fetchData = async () => {
-        if (!user) return
-
-        // 1. Fetch Profile
-        const { data: profileData } = await supabase
+        // 1. Profile
+        const { data } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', user.id)
+            .eq('id', user!.id)
             .single()
+
+        const profileData = data as any
 
         if (profileData) {
             setProfile(profileData)
-            setCompanyName(profileData.company_name || "")
-            setSiret(profileData.siret || "")
-            setHeadquartersAddress(profileData.headquarters_address || "")
-            setPickupAddress(profileData.pickup_address || "")
-            setPhone(profileData.phone || "")
-            setWebsite(profileData.website || "")
-
-            // Check if addresses are the same to toggle checkbox
-            if (profileData.headquarters_address && profileData.pickup_address && profileData.headquarters_address === profileData.pickup_address) {
-                setSameAddress(true)
-            }
-
-            // Fetch reviews
-            const { data: reviews } = await supabase
-                .from('reviews')
-                .select('rating')
-                .eq('reviewee_id', user.id)
-
-            if (reviews && reviews.length > 0) {
-                const avg = reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
-                setAverageRating(avg)
-                setReviewCount(reviews.length)
-            }
+            setEditForm({
+                company_name: profileData.company_name || "",
+                headquarters_address: profileData.headquarters_address || "",
+                phone: profileData.phone || ""
+            })
         }
 
-        // 2. Fetch Orders (as Buyer)
+        // 2. Orders (Purchases)
         const { data: ordersData } = await supabase
             .from('orders')
             .select('*, listings(*, profiles(company_name))')
-            .eq('buyer_id', user.id)
+            .eq('buyer_id', user!.id)
             .order('created_at', { ascending: false })
 
         if (ordersData) setOrders(ordersData)
 
-        // 3. Fetch Sales (as Seller) - via Listings
-        // This is a bit complex with Supabase simple client, let's fetch listings first then orders for those listings
-        // Or just fetch orders where listing.seller_id = user.id if we had that relation directly exposed or via join
-        // RLS policy "Sellers can view orders for their listings" allows us to query orders directly if we filter right?
-        // Actually, let's just fetch orders and filter by existence of listing where seller_id = me
-        // But we can't easily do deep filtering with simple client in one go without a view or complex query.
-        // Let's try fetching listings first.
-        if (profileData?.role === 'company') {
-            const { data: myListings } = await supabase
-                .from('listings')
-                .select('id')
-                .eq('seller_id', user.id)
-
-            if (myListings && myListings.length > 0) {
-                const listingIds = myListings.map(l => l.id)
-                const { data: salesData } = await supabase
-                    .from('orders')
-                    .select('*, listings(*), profiles(*)') // profiles here is the buyer
-                    .in('listing_id', listingIds)
-                    .order('created_at', { ascending: false })
-
-                if (salesData) setSales(salesData)
-            }
-        }
-
         setLoading(false)
     }
 
-    const handleUpdateProfile = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setSaving(true)
-
-        const { error } = await supabase
-            .from('profiles')
-            .update({
-                company_name: companyName,
-                siret: siret,
-                headquarters_address: headquartersAddress,
-                pickup_address: sameAddress ? headquartersAddress : pickupAddress,
-                phone: phone,
-                website: website
-            } as any)
+    const handleUpdateProfile = async () => {
+        const { error } = await (supabase
+            .from('profiles') as any)
+            .update(editForm)
             .eq('id', user!.id)
 
         if (error) {
-            alert("Erreur: " + error.message)
+            toast({ title: "Erreur", description: error.message, status: "error" })
         } else {
-            alert("Profil mis à jour !")
+            toast({ title: "Profil mis à jour", status: "success" })
+            setIsEditing(false)
+            fetchData()
         }
-        setSaving(false)
     }
 
-    if (loading) return <div className="p-8">Chargement...</div>
+    if (loading) return <Container py={10}><Text>Chargement...</Text></Container>
 
     return (
-        <div className="container mx-auto py-8 px-4">
-            <h1 className="text-3xl font-bold mb-8">Mon Profil</h1>
+        <Container maxW="container.md" py={8} pb={24}>
+            {/* Header Identity */}
+            <Flex align="center" justify="space-between" mb={8}>
+                <HStack spacing={4}>
+                    <Avatar size="lg" name={profile?.company_name || user?.email} bg="orange.500" />
+                    <VStack align="start" spacing={0}>
+                        <Heading size="md">{profile?.company_name || "Utilisateur"}</Heading>
+                        <Text color="gray.500" fontSize="sm">{user?.email}</Text>
+                        {profile?.role === 'company' && <Badge colorScheme="orange">Compte Pro</Badge>}
+                    </VStack>
+                </HStack>
+                <Button variant="ghost" colorScheme="red" leftIcon={<Icon as={LogOut} />} onClick={() => signOut()}>
+                    Déconnexion
+                </Button>
+            </Flex>
 
-            <Tabs defaultValue="info" className="space-y-6">
-                <TabsList>
-                    <TabsTrigger value="info">Mes Informations</TabsTrigger>
-                    <TabsTrigger value="history">
-                        {profile?.role === 'company' ? 'Mes Ventes' : 'Mes Commandes'}
-                    </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="info">
-                    <Card className="max-w-md">
-                        <CardHeader>
-                            <CardTitle>Modifier mon profil</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleUpdateProfile} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label>Email</Label>
-                                    <Input value={user?.email || ""} disabled />
-                                    <div className="flex items-center gap-2 mt-1">
-                                        {averageRating ? (
-                                            <>
-                                                <StarRating rating={Math.round(averageRating)} readonly className="scale-75 origin-left" />
-                                                <span className="text-xs text-muted-foreground">({reviewCount} avis)</span>
-                                            </>
-                                        ) : (
-                                            <span className="text-xs text-muted-foreground">Pas encore d'avis</span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {profile?.role === 'company' && (
-                                    <div className="space-y-4 border-l-2 border-forest/20 pl-4">
-                                        <div className="flex items-center gap-2">
-                                            <Label>Nom de l'entreprise</Label>
-                                            {profile?.is_verified && <VerifiedBadge />}
-                                        </div>
-                                        <Input
-                                            value={companyName}
-                                            onChange={(e) => setCompanyName(e.target.value)}
-                                            placeholder="Ex: Ma Société SAS"
-                                        />
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label>SIRET</Label>
-                                                <Input
-                                                    value={siret}
-                                                    onChange={(e) => setSiret(e.target.value)}
-                                                    placeholder="14 chiffres"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label>Téléphone</Label>
-                                                <Input
-                                                    value={phone}
-                                                    onChange={(e) => setPhone(e.target.value)}
-                                                    placeholder="01 23 45 67 89"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label>Site Web</Label>
-                                            <Input
-                                                value={website}
-                                                onChange={(e) => setWebsite(e.target.value)}
-                                                placeholder="https://www.mon-site.com"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label>Adresse du Siège Social</Label>
-                                            <Input
-                                                value={headquartersAddress}
-                                                onChange={(e) => {
-                                                    setHeadquartersAddress(e.target.value)
-                                                    if (sameAddress) setPickupAddress(e.target.value)
-                                                }}
-                                                placeholder="123 Rue de la République, 75001 Paris"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <div className="flex items-center space-x-2 mb-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id="sameAddress"
-                                                    className="h-4 w-4 rounded border-gray-300 text-forest focus:ring-forest"
-                                                    checked={sameAddress}
-                                                    onChange={(e) => {
-                                                        setSameAddress(e.target.checked)
-                                                        if (e.target.checked) {
-                                                            setPickupAddress(headquartersAddress)
-                                                        }
-                                                    }}
-                                                />
-                                                <label
-                                                    htmlFor="sameAddress"
-                                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                >
-                                                    L'adresse de récupération est la même que le siège
-                                                </label>
-                                            </div>
-
-                                            {!sameAddress && (
-                                                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                                                    <Label>Adresse de Récupération</Label>
-                                                    <Input
-                                                        value={pickupAddress}
-                                                        onChange={(e) => setPickupAddress(e.target.value)}
-                                                        placeholder="Entrepôt B, Zone Industrielle..."
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="space-y-2">
-                                    <Label>Rôle</Label>
-                                    <div className="capitalize">{profile?.role === 'company' ? 'Entreprise' : 'Particulier'}</div>
-                                </div>
-
-                                <Button type="submit" className="bg-forest text-white" disabled={saving}>
-                                    {saving ? "Enregistrement..." : "Enregistrer"}
-                                </Button>
-                            </form>
-                        </CardContent>
+            {/* Quick Actions for Companies */}
+            {profile?.role === 'company' && (
+                <Link href="/dashboard/company">
+                    <Card mb={8} bg="orange.50" borderColor="orange.200" borderWidth="1px">
+                        <CardBody>
+                            <Flex align="center" justify="space-between">
+                                <HStack spacing={3}>
+                                    <Icon as={Package} color="orange.600" boxSize={6} />
+                                    <VStack align="start" spacing={0}>
+                                        <Text fontWeight="bold" color="orange.800">Espace Vendeur</Text>
+                                        <Text fontSize="sm" color="orange.700">Gérez vos annonces et validez les retraits</Text>
+                                    </VStack>
+                                </HStack>
+                                <Button colorScheme="orange" size="sm">Accéder</Button>
+                            </Flex>
+                        </CardBody>
                     </Card>
-                </TabsContent>
+                </Link>
+            )}
 
-                <TabsContent value="history">
-                    {profile?.role === 'company' ? (
-                        <div className="space-y-6">
-                            <h2 className="text-xl font-semibold">Historique des ventes</h2>
-                            {sales.length === 0 ? (
-                                <p>Aucune vente pour le moment.</p>
-                            ) : (
-                                <div className="grid gap-4">
-                                    {sales.map(sale => (
-                                        <Card key={sale.id}>
-                                            <CardContent className="p-4 flex justify-between items-center">
-                                                <div>
-                                                    <div className="font-bold">{sale.listings?.title}</div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        Acheteur: {sale.profiles?.company_name || "Anonyme"} ({sale.profiles?.role})
-                                                    </div>
-                                                    <div className="text-sm">Code retrait: <span className="font-mono font-bold">{sale.pickup_code}</span></div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="font-bold text-lg">{sale.listings?.price}€</div>
-                                                    <div className={`text-sm ${sale.status === 'picked_up' ? 'text-green-600' : 'text-orange-600'}`}>
-                                                        {sale.status === 'picked_up' ? 'Terminé' : 'Réservé'}
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="space-y-6">
-                            <h2 className="text-xl font-semibold">Mes Commandes</h2>
+            <Tabs colorScheme="orange" variant="enclosed" isFitted>
+                <TabList mb={6}>
+                    <Tab fontWeight="bold"><Icon as={Package} mr={2} /> Mes Commandes</Tab>
+                    <Tab fontWeight="bold"><Icon as={SettingsIcon} mr={2} /> Mon Profil</Tab>
+                </TabList>
+
+                <TabPanels>
+                    {/* MES COMMANDES */}
+                    <TabPanel px={0}>
+                        <VStack spacing={4}>
                             {orders.length === 0 ? (
-                                <p>Aucune commande pour le moment.</p>
+                                <Box textAlign="center" py={10}>
+                                    <Text color="gray.500">Vous n'avez pas encore de commandes.</Text>
+                                    <Link href="/">
+                                        <Button mt={4} colorScheme="orange" variant="outline">Trouver des cartons</Button>
+                                    </Link>
+                                </Box>
                             ) : (
-                                <div className="grid gap-4">
-                                    {orders.map(order => (
-                                        <Card key={order.id}>
-                                            <CardContent className="p-4 flex justify-between items-center">
-                                                <div>
-                                                    <div className="font-bold">{order.listings?.title}</div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        Vendeur: {order.listings?.profiles?.company_name}
-                                                    </div>
-                                                    <div className="mt-2 p-2 bg-muted rounded inline-block">
-                                                        Code de retrait: <span className="font-mono font-bold text-lg">{order.pickup_code}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="font-bold text-lg">{order.listings?.price}€</div>
-                                                    <div className={`text-sm ${order.status === 'picked_up' ? 'text-green-600' : 'text-orange-600'}`}>
-                                                        {order.status === 'picked_up' ? 'Récupéré' : 'À récupérer'}
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
+                                orders.map(order => (
+                                    <Card key={order.id} w="full" variant="outline" borderColor={order.status === 'picked_up' ? "gray.200" : "green.400"} shadow="sm">
+                                        <CardBody>
+                                            <Flex justify="space-between" align="start" direction={{ base: "column", sm: "row" }} gap={4}>
+                                                <VStack align="start" spacing={1} flex={1}>
+                                                    <Badge colorScheme={order.status === 'picked_up' ? "gray" : "green"} mb={1}>
+                                                        {order.status === 'picked_up' ? "COMMANDE TERMINÉE" : "À RÉCUPÉRER"}
+                                                    </Badge>
+                                                    <Heading size="sm">{order.listings?.title}</Heading>
+                                                    <Text fontSize="sm" color="gray.600">
+                                                        Vendu par : <Text as="span" fontWeight="bold">{order.listings?.profiles?.company_name || "Vendeur"}</Text>
+                                                    </Text>
+                                                    <Text fontSize="lg" fontWeight="bold" color="orange.600">{order.listings?.price} €</Text>
+                                                </VStack>
+
+                                                {/* PICKUP CODE CARD */}
+                                                {order.status !== 'picked_up' && (
+                                                    <VStack
+                                                        bg="green.50"
+                                                        p={4}
+                                                        borderRadius="lg"
+                                                        borderWidth="2px"
+                                                        borderColor="green.400"
+                                                        align="center"
+                                                        w={{ base: "full", sm: "auto" }}
+                                                    >
+                                                        <Text fontSize="xs" fontWeight="bold" color="green.700" textTransform="uppercase">Code de retrait</Text>
+                                                        <Text fontSize="3xl" fontFamily="mono" fontWeight="black" color="green.700" letterSpacing="widest">
+                                                            {order.pickup_code}
+                                                        </Text>
+                                                        <Text fontSize="xs" color="green.600" textAlign="center">Communiquez ce code<br />au vendeur</Text>
+                                                    </VStack>
+                                                )}
+                                            </Flex>
+                                        </CardBody>
+                                    </Card>
+                                ))
                             )}
-                        </div>
-                    )}
-                </TabsContent>
+                        </VStack>
+                    </TabPanel>
+
+                    {/* MON PROFIL */}
+                    <TabPanel px={0}>
+                        <Card variant="outline">
+                            <CardBody>
+                                <VStack spacing={4} align="stretch">
+                                    <Flex justify="space-between" align="center">
+                                        <Heading size="sm">Informations Personnelles</Heading>
+                                        <Button size="sm" onClick={() => isEditing ? handleUpdateProfile() : setIsEditing(true)} colorScheme={isEditing ? "green" : "gray"}>
+                                            {isEditing ? "Sauvegarder" : "Modifier"}
+                                        </Button>
+                                    </Flex>
+                                    <Divider />
+
+                                    <FormControl>
+                                        <FormLabel>Nom / Entreprise</FormLabel>
+                                        <Input
+                                            value={editForm.company_name}
+                                            onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })}
+                                            isReadOnly={!isEditing}
+                                            variant={isEditing ? "outline" : "filled"}
+                                        />
+                                    </FormControl>
+
+                                    <FormControl>
+                                        <FormLabel>Adresse</FormLabel>
+                                        <Input
+                                            value={editForm.headquarters_address}
+                                            onChange={(e) => setEditForm({ ...editForm, headquarters_address: e.target.value })}
+                                            isReadOnly={!isEditing}
+                                            variant={isEditing ? "outline" : "filled"}
+                                        />
+                                    </FormControl>
+
+                                    <FormControl>
+                                        <FormLabel>Téléphone</FormLabel>
+                                        <Input
+                                            value={editForm.phone}
+                                            onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                            isReadOnly={!isEditing}
+                                            variant={isEditing ? "outline" : "filled"}
+                                        />
+                                    </FormControl>
+                                </VStack>
+                            </CardBody>
+                        </Card>
+                    </TabPanel>
+                </TabPanels>
             </Tabs>
-        </div>
+        </Container>
     )
 }
+

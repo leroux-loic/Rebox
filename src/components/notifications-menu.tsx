@@ -78,8 +78,8 @@ export function NotificationsMenu() {
     }
 
     const markAsRead = async (id: string) => {
-        const { error } = await supabase
-            .from('notifications')
+        const { error } = await (supabase
+            .from('notifications') as any)
             .update({ read: true })
             .eq('id', id)
 

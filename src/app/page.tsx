@@ -1,184 +1,177 @@
-'use client'
+"use client"
 
-import { Box, Button, Container, Flex, Heading, Text, SimpleGrid, Icon, Stack, Image, useColorModeValue } from '@chakra-ui/react'
-import { motion } from 'framer-motion'
-import Link from 'next/link'
-import { ArrowRight, Package, Leaf, ShieldCheck, TrendingUp } from 'lucide-react'
+import { useAuth } from "@/components/auth-provider"
+import { ListingCard } from "@/components/listing-card"
+import { supabase } from "@/lib/supabase/client"
+import { Box, Button, Container, Flex, Heading, Input, InputGroup, InputLeftElement, SimpleGrid, Text, VStack, Icon, Badge, Select, HStack, useColorModeValue, Image } from "@chakra-ui/react"
+import { Search, MapPin, Package, ArrowRight, Truck, Store, Recycle, Star, Box as BoxIcon, Archive } from "lucide-react"
+import Link from "next/link"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 
-const MotionBox = motion(Box)
-const MotionHeading = motion(Heading)
-const MotionText = motion(Text)
+// Category Data with Icons
+const CATEGORIES = [
+  { id: 'standard', label: 'Petits Cartons', icon: BoxIcon, color: 'brand' },
+  { id: 'grand', label: 'Grand Format', icon: Package, color: 'brand' },
+  { id: 'demenagement', label: 'Déménagement', icon: Truck, color: 'brand' },
+  { id: 'special', label: 'Spéciaux', icon: Archive, color: 'brand' },
+  { id: 'vrac', label: 'Lots / Palettes', icon: Store, color: 'brand' },
+  { id: 'gratuit', label: 'Gratuits', icon: Recycle, color: 'brand' },
+]
 
-export default function LandingPage() {
-  const bg = useColorModeValue('brand.50', 'gray.900')
-  const color = useColorModeValue('gray.700', 'gray.200')
+export default function Home() {
+  const { user } = useAuth()
+  const router = useRouter()
+  const [recentListings, setRecentListings] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+
+  useEffect(() => {
+    fetchRecentListings()
+  }, [])
+
+  const fetchRecentListings = async () => {
+    const { data } = await supabase
+      .from('listings')
+      .select('*, profiles(company_name, is_verified)')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(6)
+
+    if (data) setRecentListings(data)
+    setLoading(false)
+  }
+
+  const handleSearch = () => {
+    router.push(`/dashboard/individual?search=${searchTerm}`)
+  }
 
   return (
-    <Box bg={bg} color={color} minH="100vh">
-      {/* Hero Section */}
-      <Container maxW="container.xl" pt={{ base: 20, md: 32 }} pb={{ base: 20, md: 32 }}>
-        <Flex direction={{ base: 'column', md: 'row' }} align="center" justify="space-between">
-          <Box flex="1" pr={{ md: 12 }} mb={{ base: 12, md: 0 }}>
-            <MotionHeading
-              as="h1"
-              size="4xl"
-              fontWeight="extrabold"
-              lineHeight="shorter"
-              mb={6}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Text as="span" color="brand.600">Donnez une seconde vie</Text>
-              <br />
-              à vos cartons.
-            </MotionHeading>
-            <MotionText
-              fontSize="xl"
-              color="gray.500"
-              mb={8}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              La première marketplace B2B/B2C pour l'achat et la revente de cartons de réemploi.
-              Économique pour vous, écologique pour la planète.
-            </MotionText>
-            <Stack direction={{ base: 'column', sm: 'row' }} spacing={4}>
-              <Link href="/dashboard/individual">
+    <Box pb={20} minH="100vh" bg="gray.50">
+      {/* PREMIUM HERO SECTION - Forest Green */}
+      <Box
+        bg="brand.500"
+        color="white"
+        pt={{ base: 12, md: 24 }}
+        pb={{ base: 24, md: 32 }}
+        borderBottomRadius={{ base: "2rem", md: "3rem" }}
+        position="relative"
+        overflow="hidden"
+      >
+        <Container maxW="container.xl" position="relative" zIndex="10">
+          <VStack spacing={6} textAlign="center" maxW="3xl" mx="auto">
+            <Badge colorScheme="green" bg="whiteAlpha.300" color="white" px={3} py={1} borderRadius="full">
+              N°1 du Réemploi Carton
+            </Badge>
+            <Heading as="h1" size={{ base: "2xl", md: "3xl" }} fontWeight="800" letterSpacing="tight" lineHeight="1.1">
+              Donnez une seconde vie <br />
+              <Text as="span" color="brand.200">à vos emballages.</Text>
+            </Heading>
+            <Text fontSize="lg" opacity="0.9" maxW="2xl">
+              Achetez des cartons de qualité professionnelle auprès d'entreprises locales ou trouvez des lots gratuits près de chez vous.
+            </Text>
+
+            {/* Main Search Bar - Floating */}
+            <Box w="full" bg="white" p={2} borderRadius="full" boxShadow="2xl" mt={6}>
+              <Flex gap={2}>
+                <InputGroup size="lg">
+                  <InputLeftElement pointerEvents="none">
+                    <Search className="text-gray-400" />
+                  </InputLeftElement>
+                  <Input
+                    placeholder="Que recherchez-vous ? (ex: Cartons déménagement)"
+                    variant="unstyled"
+                    color="black"
+                    px={2}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                </InputGroup>
                 <Button
+                  display={{ base: "none", sm: "flex" }}
                   size="lg"
                   colorScheme="brand"
-                  px={8}
-                  rightIcon={<ArrowRight />}
-                  _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
+                  borderRadius="full"
+                  px={10}
+                  onClick={handleSearch}
                 >
-                  Trouver des cartons
+                  Rechercher
                 </Button>
-              </Link>
-              <Link href="/dashboard/company">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  colorScheme="brand"
-                  px={8}
-                  _hover={{ bg: 'brand.50' }}
-                >
-                  Vendre mes stocks
-                </Button>
-              </Link>
-            </Stack>
-          </Box>
-          <Box flex="1" position="relative">
-            <MotionBox
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8 }}
+              </Flex>
+            </Box>
+            {/* Mobile Search Button */}
+            <Button
+              display={{ base: "flex", sm: "none" }}
+              size="lg"
+              colorScheme="brand"
+              w="full"
+              borderRadius="full"
+              onClick={handleSearch}
+              boxShadow="lg"
             >
-              <Image
-                src="https://images.unsplash.com/photo-1586769852044-692d6e3703f0?q=80&w=2574&auto=format&fit=crop"
-                alt="Cardboard boxes"
-                rounded="2xl"
-                shadow="2xl"
-                objectFit="cover"
-                maxH="500px"
-                w="full"
-              />
-              {/* Floating Badge */}
-              <Box
-                position="absolute"
-                bottom="-20px"
-                left="-20px"
+              Rechercher
+            </Button>
+          </VStack>
+        </Container>
+
+        {/* Decor shapes */}
+        <Box position="absolute" top="-10%" left="-5%" boxSize="300px" bg="whiteAlpha.100" borderRadius="full" filter="blur(40px)" />
+        <Box position="absolute" bottom="-10%" right="-5%" boxSize="400px" bg="brand.600" borderRadius="full" filter="blur(60px)" opacity="0.5" />
+      </Box>
+
+      {/* CATEGORIES GRID - Overlapping Hero */}
+      <Container maxW="container.xl" mt={{ base: -12, md: -16 }}>
+        <SimpleGrid columns={{ base: 3, md: 6 }} spacing={4} mb={16}>
+          {CATEGORIES.map((cat) => (
+            <Link key={cat.id} href={`/dashboard/individual?category=${cat.label}`}>
+              <Flex
+                direction="column"
+                align="center"
+                justify="center"
                 bg="white"
                 p={4}
-                rounded="xl"
-                shadow="xl"
-                maxW="200px"
+                h="full"
+                borderRadius="2xl"
+                boxShadow="lg"
+                transition="all 0.2s"
+                _hover={{ transform: "translateY(-4px)", boxShadow: "xl", color: "brand.600" }}
+                role="group"
               >
-                <Flex align="center" mb={2}>
-                  <Icon as={TrendingUp} color="green.500" w={6} h={6} mr={2} />
-                  <Text fontWeight="bold" color="gray.800">Impact Direct</Text>
-                </Flex>
-                <Text fontSize="sm" color="gray.600">Déjà 12 tonnes de CO2 économisées cette année !</Text>
-              </Box>
-            </MotionBox>
-          </Box>
-        </Flex>
+                <Box bg="gray.50" p={3} borderRadius="full" mb={3} _groupHover={{ bg: "brand.50" }}>
+                  <Icon as={cat.icon} boxSize={6} color="gray.600" _groupHover={{ color: "brand.600" }} />
+                </Box>
+                <Text fontWeight="bold" fontSize={{ base: "xs", md: "sm" }} textAlign="center" color="gray.700">{cat.label}</Text>
+              </Flex>
+            </Link>
+          ))}
+        </SimpleGrid>
+
+        {/* LISTINGS SECTION */}
+        <Box mb={16}>
+          <Flex justify="space-between" align="center" mb={8}>
+            <VStack align="start" spacing={1}>
+              <Heading size="lg" color="gray.800">Dernières annonces</Heading>
+              <Text color="gray.500">Les meilleures offres près de chez vous</Text>
+            </VStack>
+            <Link href="/dashboard/individual">
+              <Button variant="ghost" colorScheme="brand" rightIcon={<ArrowRight size={16} />}>Tout voir</Button>
+            </Link>
+          </Flex>
+
+          {loading ? (
+            <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} spacing={8}>
+              {[1, 2, 3].map(i => <Box key={i} h="350px" bg="gray.200" borderRadius="2xl" />)}
+            </SimpleGrid>
+          ) : (
+            <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} spacing={8}>
+              {recentListings.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))}
+            </SimpleGrid>
+          )}
+        </Box>
       </Container>
-
-      {/* Features Section (Bento Grid Style) */}
-      <Box py={20} bg="white">
-        <Container maxW="container.xl">
-          <Heading textAlign="center" mb={16} size="2xl">Pourquoi ReBox ?</Heading>
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={10}>
-            <Feature
-              icon={Package}
-              title="Économie Circulaire"
-              text="Réutilisez des cartons existants plutôt que d'en produire de nouveaux. Réduisez vos coûts d'emballage de 40%."
-            />
-            <Feature
-              icon={Leaf}
-              title="Impact Écologique"
-              text="Chaque tonne de carton réemployée sauve 17 arbres et économise 4000L d'eau. Suivez votre impact en temps réel."
-            />
-            <Feature
-              icon={ShieldCheck}
-              title="Qualité Vérifiée"
-              text="Nos vendeurs partenaires sont vérifiés. Les cartons sont inspectés pour garantir leur solidité."
-            />
-          </SimpleGrid>
-        </Container>
-      </Box>
-
-      {/* CTA Section */}
-      <Box py={20} bg="brand.600" color="white" textAlign="center">
-        <Container maxW="container.md">
-          <Heading size="2xl" mb={6}>Prêt à changer le monde ?</Heading>
-          <Text fontSize="xl" mb={10} opacity={0.9}>
-            Rejoignez plus de 500 entreprises et particuliers qui ont choisi le réemploi.
-          </Text>
-          <Link href="/signup">
-            <Button
-              size="xl"
-              bg="white"
-              color="brand.600"
-              px={12}
-              py={8}
-              fontSize="xl"
-              _hover={{ bg: 'brand.50', transform: 'scale(1.05)' }}
-            >
-              Commencer maintenant
-            </Button>
-          </Link>
-        </Container>
-      </Box>
     </Box>
-  )
-}
-
-function Feature({ title, text, icon }: { title: string, text: string, icon: any }) {
-  return (
-    <Stack
-      bg="gray.50"
-      p={8}
-      rounded="2xl"
-      spacing={4}
-      transition="all 0.3s"
-      _hover={{ transform: 'translateY(-5px)', shadow: 'lg', bg: 'brand.50' }}
-    >
-      <Flex
-        w={12}
-        h={12}
-        align="center"
-        justify="center"
-        rounded="full"
-        bg="brand.100"
-        color="brand.600"
-      >
-        <Icon as={icon} w={6} h={6} />
-      </Flex>
-      <Heading size="md">{title}</Heading>
-      <Text color="gray.600">{text}</Text>
-    </Stack>
   )
 }

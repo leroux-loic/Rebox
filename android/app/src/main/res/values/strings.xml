@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ReBoX</string>
+    <string name="title_activity_main">ReBoX</string>
+    <string name="package_name">com.rebox.app</string>
+    <string name="custom_url_scheme">com.rebox.app</string>
+</resources>

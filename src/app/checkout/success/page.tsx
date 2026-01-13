@@ -7,7 +7,9 @@ import { CheckCircle, ArrowRight } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { useAuth } from "@/components/auth-provider"
 
-export default function CheckoutSuccessPage() {
+import { Suspense } from "react"
+
+function CheckoutSuccessContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const { user } = useAuth()
@@ -23,7 +25,7 @@ export default function CheckoutSuccessPage() {
                     const code = Math.random().toString(36).substring(2, 8).toUpperCase()
 
                     // Call the secure RPC function
-                    const { data, error } = await supabase.rpc('complete_payment', {
+                    const { data, error } = await (supabase as any).rpc('complete_payment', {
                         p_session_id: sessionId,
                         p_pickup_code: code
                     })
@@ -81,5 +83,13 @@ export default function CheckoutSuccessPage() {
                 </Button>
             </VStack>
         </Container>
+    )
+}
+
+export default function CheckoutSuccessPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center">Finalisation du paiement...</div>}>
+            <CheckoutSuccessContent />
+        </Suspense>
     )
 }

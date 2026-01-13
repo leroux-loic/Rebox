@@ -235,17 +235,7 @@ export default function IndividualDashboard() {
                                 }
 
                                 return (
-                                    <Link key={listing.id} href={`/listings/${listing.id}`}>
-                                        <ListingCard
-                                            title={listing.title}
-                                            price={listing.price}
-                                            quantity={listing.quantity}
-                                            condition="Bon état"
-                                            sellerName={listing.profiles?.company_name || "Vendeur"}
-                                            imageUrl={listing.image_url}
-                                            distance={distanceDisplay}
-                                        />
-                                    </Link>
+                                    <ListingCard key={listing.id} listing={{ ...listing, distance: distanceDisplay }} />
                                 )
                             })}
                         </SimpleGrid>

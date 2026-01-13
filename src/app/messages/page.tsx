@@ -33,8 +33,9 @@ export default function MessagesPage() {
 
         if (!error && messages) {
             const grouped = new Map()
+            const msgs = messages as any[]
 
-            messages.forEach(msg => {
+            msgs.forEach(msg => {
                 const otherUserId = msg.sender_id === user!.id ? msg.receiver_id : msg.sender_id
                 const key = `${msg.listing_id}-${otherUserId}`
 

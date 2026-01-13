@@ -37,14 +37,9 @@ export default function LoginPage() {
         } else {
             // Check user role and redirect accordingly
             const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', user.id)
-                    .single()
 
-                const userProfile = profile as { role: 'company' | 'individual' } | null
+            if (user) {
+                const role = user.user_metadata?.role as 'company' | 'individual' | undefined
 
                 toast({
                     title: "Connexion réussie",
@@ -52,9 +47,10 @@ export default function LoginPage() {
                     duration: 3000,
                 })
 
-                if (userProfile?.role === 'company') {
+                if (role === 'company') {
                     router.push('/dashboard/company')
                 } else {
+                    // Default to individual if role is missing or explicit
                     router.push('/dashboard/individual')
                 }
             }

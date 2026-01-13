@@ -59,8 +59,12 @@ const config = {
                     foreground: "#000000",
                 },
                 forest: {
-                    DEFAULT: "#228B22",
+                    DEFAULT: "hsl(157, 100%, 26%)", // Match Primary
                     foreground: "#FFFFFF",
+                },
+                sand: {
+                    DEFAULT: "hsl(30, 24%, 88%)",
+                    foreground: "hsl(157, 100%, 15%)",
                 }
             },
             borderRadius: {
@@ -77,6 +81,14 @@ const config = {
                     from: { height: "var(--radix-accordion-content-height)" },
                     to: { height: "0" },
                 },
+                "slide-up": {
+                    from: { transform: "translateY(10px)", opacity: "0" },
+                    to: { transform: "translateY(0)", opacity: "1" },
+                },
+                "fade-in": {
+                    from: { opacity: "0" },
+                    to: { opacity: "1" },
+                }
             },
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
