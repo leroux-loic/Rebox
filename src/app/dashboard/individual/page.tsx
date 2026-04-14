@@ -6,11 +6,12 @@ import { ListingCard } from "@/components/listing-card"
 import { ImpactCard } from "@/components/impact-card"
 import { BadgesList } from "@/components/badges-list"
 import { Leaderboard } from "@/components/leaderboard"
-import { Box, Button, Container, Flex, Heading, SimpleGrid, Input, InputGroup, InputLeftElement, Icon, VStack, HStack, Text, useColorModeValue } from "@chakra-ui/react"
+import { Box, Button, Container, Flex, Heading, SimpleGrid, Input, InputGroup, InputLeftElement, Icon, VStack, HStack, Text, useColorModeValue, Avatar, Grid, GridItem, InputRightAddon } from "@chakra-ui/react"
 import MapWrapper from "@/components/map-wrapper"
-import { Search } from "lucide-react"
+import { Search, Package, Award, Heart } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/components/auth-provider"
+import { motion } from "framer-motion"
 
 // Define available badges
 const AVAILABLE_BADGES = [
@@ -25,28 +26,21 @@ export default function IndividualDashboard() {
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
     const [profile, setProfile] = useState<any>(null)
-
-    // Advanced Filters State
     const [showFilters, setShowFilters] = useState(false)
     const [filters, setFilters] = useState({
         minLength: "", maxLength: "",
         minWidth: "", maxWidth: "",
         minHeight: "", maxHeight: "",
-        radius: "50", // km
+        radius: "50",
     })
     const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null)
 
     useEffect(() => {
         fetchListings()
         if (user) fetchProfile()
-
-        // Get user location for radius filter
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition((position) => {
-                setUserLocation({
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                })
+                setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude })
             })
         }
     }, [user])
@@ -58,58 +52,36 @@ export default function IndividualDashboard() {
 
     const fetchListings = async () => {
         setLoading(true)
-        let query = supabase
-            .from('listings')
-            .select('*, profiles(company_name)')
-            .eq('status', 'active')
-            .order('created_at', { ascending: false })
-
-        // Apply server-side dimension filters if set
+        let query = supabase.from('listings').select('*, profiles(company_name)').eq('status', 'active').order('created_at', { ascending: false })
         if (filters.minLength) query = query.gte('length', parseInt(filters.minLength))
         if (filters.maxLength) query = query.lte('length', parseInt(filters.maxLength))
         if (filters.minWidth) query = query.gte('width', parseInt(filters.minWidth))
         if (filters.maxWidth) query = query.lte('width', parseInt(filters.maxWidth))
         if (filters.minHeight) query = query.gte('height', parseInt(filters.minHeight))
         if (filters.maxHeight) query = query.lte('height', parseInt(filters.maxHeight))
-
         const { data, error } = await query
-
-        if (!error && data) {
-            setListings(data)
-        }
+        if (!error && data) setListings(data)
         setLoading(false)
     }
 
-    // Re-fetch when filters change (debounced ideally, but button click for now or effect)
     useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchListings()
-        }, 500)
+        const timer = setTimeout(() => fetchListings(), 500)
         return () => clearTimeout(timer)
-    }, [filters.minLength, filters.maxLength, filters.minWidth, filters.maxWidth, filters.minHeight, filters.maxHeight])
+    }, [filters])
 
-    // Client-side filtering for Radius and Search Term
     const filteredListings = listings.filter(l => {
-        // Text search
         const matchesSearch = l.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             l.description?.toLowerCase().includes(searchTerm.toLowerCase())
-
-        // Radius search
         let matchesRadius = true
         if (userLocation && filters.radius) {
-            const R = 6371 // Earth radius in km
+            const R = 6371
             const dLat = (l.location_lat - userLocation.lat) * Math.PI / 180
             const dLon = (l.location_lng - userLocation.lng) * Math.PI / 180
-            const a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(userLocation.lat * Math.PI / 180) * Math.cos(l.location_lat * Math.PI / 180) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2)
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(userLocation.lat * Math.PI / 180) * Math.cos(l.location_lat * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2)
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
             const distance = R * c
-
             matchesRadius = distance <= parseInt(filters.radius)
         }
-
         return matchesSearch && matchesRadius
     })
 
@@ -119,139 +91,185 @@ export default function IndividualDashboard() {
         title: `${l.title} - ${l.price}€`
     }))
 
-    // Merge unlocked badges
     const displayBadges = AVAILABLE_BADGES.map(badge => {
         const unlocked = profile?.badges?.find((b: any) => b.id === badge.id)
         return unlocked ? { ...badge, unlocked: true } : { ...badge, unlocked: false }
     })
 
     return (
-        <Container maxW="container.xl" py={8}>
-            <Flex direction={{ base: "column", md: "row" }} justify="space-between" align="center" mb={8} gap={4}>
-                <Heading size="lg">Trouver des cartons</Heading>
-                <Flex w={{ base: "full", md: "auto" }} gap={2} align="center">
-                    <Link href="/profile">
-                        <Button variant="outline">Mes Commandes</Button>
-                    </Link>
-                    <InputGroup maxW="xs">
-                        <InputLeftElement pointerEvents="none">
-                            <Icon as={Search} color="gray.300" />
-                        </InputLeftElement>
-                        <Input
-                            placeholder="Rechercher..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </InputGroup>
-                    <Button onClick={() => setShowFilters(!showFilters)} variant={showFilters ? "solid" : "outline"} colorScheme="brand">
-                        Filtres
-                    </Button>
-                </Flex>
-            </Flex>
+        <Box bg="eco.50" minH="100vh" pb={20}>
+            {/* TOP STATS BAR */}
+            <Box bg="white" borderBottom="1px solid" borderColor="eco.100" py={6} mb={8} shadow="sm">
+                <Container maxW="container.xl">
+                    <Flex direction={{ base: "column", lg: "row" }} align="center" gap={8}>
+                        <Box flex="1">
+                            <VStack align="start" spacing={1}>
+                                <Heading size="lg" color="brand.900" letterSpacing="tighter">Bonjour, {user?.user_metadata?.full_name?.split(' ')[0] || "Recycleur"} ! 👋</Heading>
+                                <Text color="brown.500" fontWeight="medium">Prêt à sauver de nouveaux cartons aujourd'hui ?</Text>
+                            </VStack>
+                        </Box>
+                        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} flex="2" w="full">
+                            <ImpactCard carbonScore={profile?.carbon_score || 0} compact />
+                            <Box bg="eco.50" p={4} borderRadius="2xl" border="1px solid" borderColor="eco.100">
+                                <HStack spacing={4}>
+                                    <Box boxSize="40px" bg="brand.500" borderRadius="xl" display="flex" alignItems="center" justifyContent="center">
+                                        <Icon as={Search} color="white" />
+                                    </Box>
+                                    <VStack align="start" spacing={0}>
+                                        <Text fontSize="2xl" fontWeight="black" color="brand.900">{filteredListings.length}</Text>
+                                        <Text fontSize="xs" color="brown.400" fontWeight="bold">Annonces autour de vous</Text>
+                                    </VStack>
+                                </HStack>
+                            </Box>
+                            <Box bg="brown.900" p={4} borderRadius="2xl" color="white">
+                                <HStack spacing={4}>
+                                    <Avatar size="sm" src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.email}`} />
+                                    <VStack align="start" spacing={0}>
+                                        <Text fontSize="sm" fontWeight="black">Niveau 2</Text>
+                                        <Text fontSize="xs" color="brown.200">ReBox Enthusiast</Text>
+                                    </VStack>
+                                </HStack>
+                            </Box>
+                        </SimpleGrid>
+                    </Flex>
+                </Container>
+            </Box>
 
-            {/* Advanced Filters Section */}
-            {showFilters && (
-                <Box mb={8} p={4} borderWidth="1px" borderRadius="lg" bg="gray.50">
-                    <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
-                        <Box>
-                            <Text fontSize="sm" mb={1} fontWeight="bold">Longueur (cm)</Text>
-                            <HStack>
-                                <Input placeholder="Min" bg="white" type="number" value={filters.minLength} onChange={(e) => setFilters({ ...filters, minLength: e.target.value })} />
-                                <Input placeholder="Max" bg="white" type="number" value={filters.maxLength} onChange={(e) => setFilters({ ...filters, maxLength: e.target.value })} />
-                            </HStack>
-                        </Box>
-                        <Box>
-                            <Text fontSize="sm" mb={1} fontWeight="bold">Largeur (cm)</Text>
-                            <HStack>
-                                <Input placeholder="Min" bg="white" type="number" value={filters.minWidth} onChange={(e) => setFilters({ ...filters, minWidth: e.target.value })} />
-                                <Input placeholder="Max" bg="white" type="number" value={filters.maxWidth} onChange={(e) => setFilters({ ...filters, maxWidth: e.target.value })} />
-                            </HStack>
-                        </Box>
-                        <Box>
-                            <Text fontSize="sm" mb={1} fontWeight="bold">Hauteur (cm)</Text>
-                            <HStack>
-                                <Input placeholder="Min" bg="white" type="number" value={filters.minHeight} onChange={(e) => setFilters({ ...filters, minHeight: e.target.value })} />
-                                <Input placeholder="Max" bg="white" type="number" value={filters.maxHeight} onChange={(e) => setFilters({ ...filters, maxHeight: e.target.value })} />
-                            </HStack>
-                        </Box>
-                        <Box>
-                            <Text fontSize="sm" mb={1} fontWeight="bold">Rayon (km)</Text>
-                            <Input placeholder="50" bg="white" type="number" value={filters.radius} onChange={(e) => setFilters({ ...filters, radius: e.target.value })} />
-                            {userLocation && <Text fontSize="xs" color="green.600" mt={1}>📍 Localisation active</Text>}
-                        </Box>
-                    </SimpleGrid>
-                </Box>
-            )}
+            <Container maxW="container.xl">
+                <Grid templateColumns={{ base: "1fr", lg: "65fr 35fr" }} gap={12}>
 
-            {/* Gamification Section */}
-            {user && (
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={8}>
-                    <Box gridColumn={{ md: "span 1" }}>
-                        <ImpactCard carbonScore={profile?.carbon_score || 0} />
-                    </Box>
-                    <Box gridColumn={{ md: "span 2" }}>
-                        <VStack spacing={6} align="stretch">
-                            <BadgesList badges={displayBadges} />
-
-                            <Box borderWidth="1px" borderRadius="xl" p={0} overflow="hidden">
-                                <Box p={4} borderBottomWidth="1px" bg="gray.50">
-                                    <Heading size="sm">Top Recycleurs</Heading>
-                                </Box>
-                                <Box p={4}>
-                                    <Leaderboard limit={3} compact />
-                                    <Link href="/leaderboard">
-                                        <Button variant="link" colorScheme="brand" size="sm" mt={2}>
-                                            Voir le classement
+                    {/* LEFT: MARKETPLACE FEED */}
+                    <GridItem>
+                        <VStack spacing={8} align="stretch">
+                            {/* Unified Search & Filters Header */}
+                            <Box bg="white" p={4} borderRadius="3xl" shadow="xl" border="1px solid" borderColor="eco.100">
+                                <VStack spacing={4}>
+                                    <Flex w="full" gap={3}>
+                                        <InputGroup size="lg">
+                                            <InputLeftElement pointerEvents="none">
+                                                <Icon as={Search} color="eco.400" />
+                                            </InputLeftElement>
+                                            <Input
+                                                placeholder="Que recherchez-vous ? (ex: déménagement, palettes...)"
+                                                variant="unstyled"
+                                                px={4}
+                                                h="50px"
+                                                fontSize="md"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                        </InputGroup>
+                                        <Button
+                                            h="50px"
+                                            px={6}
+                                            borderRadius="2xl"
+                                            colorScheme={showFilters ? "brand" : "eco"}
+                                            variant={showFilters ? "solid" : "outline"}
+                                            onClick={() => setShowFilters(!showFilters)}
+                                            leftIcon={<Search size={18} />}
+                                        >
+                                            Filtres
                                         </Button>
-                                    </Link>
-                                </Box>
+                                    </Flex>
+
+                                    {showFilters && (
+                                        <Box w="full" pt={4} borderTop="1px solid" borderColor="eco.50">
+                                            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
+                                                <Box>
+                                                    <Text fontSize="xs" fontWeight="black" mb={2} color="brown.500" textTransform="uppercase">Dimensions</Text>
+                                                    <SimpleGrid columns={2} spacing={2}>
+                                                        <Input size="sm" placeholder="Longueur min" bg="eco.50" type="number" value={filters.minLength} onChange={(e) => setFilters({ ...filters, minLength: e.target.value })} borderRadius="lg" />
+                                                        <Input size="sm" placeholder="Largeur min" bg="eco.50" type="number" value={filters.minWidth} onChange={(e) => setFilters({ ...filters, minWidth: e.target.value })} borderRadius="lg" />
+                                                    </SimpleGrid>
+                                                </Box>
+                                                <Box>
+                                                    <Text fontSize="xs" fontWeight="black" mb={2} color="brown.500" textTransform="uppercase">Rayon de recherche</Text>
+                                                    <InputGroup size="sm">
+                                                        <Input placeholder="Rayon (km)" bg="eco.50" type="number" value={filters.radius} onChange={(e) => setFilters({ ...filters, radius: e.target.value })} borderRadius="lg" />
+                                                        <InputRightAddon bg="eco.100" color="brown.700">km</InputRightAddon>
+                                                    </InputGroup>
+                                                </Box>
+                                                <Flex align="end">
+                                                    <Button w="full" size="sm" variant="ghost" colorScheme="orange" onClick={() => setFilters({ minLength: "", maxLength: "", minWidth: "", maxWidth: "", minHeight: "", maxHeight: "", radius: "50" })}>Réinitialiser</Button>
+                                                </Flex>
+                                            </SimpleGrid>
+                                        </Box>
+                                    )}
+                                </VStack>
+                            </Box>
+
+                            {/* Listings Grid */}
+                            <Box>
+                                {loading ? (
+                                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                                        {[1, 2, 3, 4].map(i => <Box key={i} h="300px" bg="white" borderRadius="3xl" as={motion.div} animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity } as any} />)}
+                                    </SimpleGrid>
+                                ) : filteredListings.length === 0 ? (
+                                    <VStack py={20} spacing={4} bg="white" borderRadius="4xl" border="1px dashed" borderColor="eco.300">
+                                        <Icon as={Package} boxSize={12} color="eco.200" />
+                                        <Text fontWeight="bold" color="brown.400">Aucun carton trouvé par ici...</Text>
+                                        <Button variant="link" colorScheme="brand" onClick={() => setSearchTerm("")}>Voir toutes les annonces</Button>
+                                    </VStack>
+                                ) : (
+                                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8}>
+                                        {filteredListings.map((listing) => (
+                                            <ListingCard key={listing.id} listing={listing} />
+                                        ))}
+                                    </SimpleGrid>
+                                )}
                             </Box>
                         </VStack>
-                    </Box>
-                </SimpleGrid>
-            )}
+                    </GridItem>
 
-            <SimpleGrid columns={{ base: 1, lg: 3 }} spacing={8}>
-                <Box gridColumn={{ lg: "span 2" }}>
-                    {loading ? (
-                        <Text>Chargement des annonces...</Text>
-                    ) : filteredListings.length === 0 ? (
-                        <Text>Aucune annonce trouvée.</Text>
-                    ) : (
-                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                            {filteredListings.map((listing) => {
-                                let distanceDisplay = undefined
-                                if (userLocation) {
-                                    const R = 6371 // km
-                                    const dLat = (listing.location_lat - userLocation.lat) * Math.PI / 180
-                                    const dLon = (listing.location_lng - userLocation.lng) * Math.PI / 180
-                                    const a =
-                                        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                                        Math.cos(userLocation.lat * Math.PI / 180) * Math.cos(listing.location_lat * Math.PI / 180) *
-                                        Math.sin(dLon / 2) * Math.sin(dLon / 2)
-                                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-                                    const d = R * c
-                                    distanceDisplay = d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)}km`
-                                }
+                    {/* RIGHT: MAP & GAMIFICATION */}
+                    <GridItem>
+                        <VStack spacing={8} position="sticky" top="110px">
+                            {/* Map Container */}
+                            <Box
+                                bg="white"
+                                p={2}
+                                borderRadius="4xl"
+                                shadow="2xl"
+                                border="1px solid"
+                                borderColor="eco.100"
+                                w="full"
+                                h="450px"
+                                overflow="hidden"
+                            >
+                                <MapWrapper
+                                    markers={mapMarkers}
+                                    center={userLocation ? [userLocation.lat, userLocation.lng] : undefined}
+                                />
+                            </Box>
 
-                                return (
-                                    <ListingCard key={listing.id} listing={{ ...listing, distance: distanceDisplay }} />
-                                )
-                            })}
-                        </SimpleGrid>
-                    )}
-                </Box>
+                            {/* Leaderboard Compact */}
+                            <Box bg="white" p={8} borderRadius="4xl" shadow="lg" w="full" border="1px solid" borderColor="eco.100">
+                                <VStack align="stretch" spacing={6}>
+                                    <Flex justify="space-between" align="center">
+                                        <Heading size="sm" color="brand.900" letterSpacing="tight">Top Recycleurs</Heading>
+                                        <Link href="/leaderboard"><Text fontSize="xs" fontWeight="bold" color="brand.500">Voir tout</Text></Link>
+                                    </Flex>
+                                    <Leaderboard limit={3} compact />
+                                </VStack>
+                            </Box>
 
-                <Box position="sticky" top="4" h="500px">
-                    <Box borderRadius="lg" overflow="hidden" h="full" borderWidth="1px">
-                        <MapWrapper
-                            markers={mapMarkers}
-                            className="h-full"
-                            center={userLocation ? [userLocation.lat, userLocation.lng] : undefined}
-                        />
-                    </Box>
-                </Box>
-            </SimpleGrid>
-        </Container>
+                            {/* Badge Invite */}
+                            <Box bgGradient="linear(to-br, brand.600, brand.900)" p={6} borderRadius="3xl" w="full" color="white" shadow="xl">
+                                <VStack spacing={4} align="start">
+                                    <Icon as={Award} boxSize={8} color="brand.200" />
+                                    <VStack align="start" spacing={1}>
+                                        <Text fontWeight="black" fontSize="lg">Débloquez vos Badges</Text>
+                                        <Text fontSize="xs" color="brand.100">Continuez à sauver des cartons pour obtenir des récompenses exclusives.</Text>
+                                    </VStack>
+                                    <BadgesList badges={displayBadges.slice(0, 3)} compact />
+                                </VStack>
+                            </Box>
+                        </VStack>
+                    </GridItem>
+
+                </Grid>
+            </Container>
+        </Box>
     )
 }
+
