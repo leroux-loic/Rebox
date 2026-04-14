@@ -14,9 +14,11 @@ export function Navbar() {
     const pathname = usePathname()
     const router = useRouter()
     const { isOpen, onOpen, onClose } = useDisclosure()
+    const [isMounted, setIsMounted] = useState(false)
     const [role, setRole] = useState<string | null>(null)
 
     useEffect(() => {
+        setIsMounted(true)
         if (user) {
             fetchRole()
         }
@@ -107,7 +109,9 @@ export function Navbar() {
                             />
                         </Link>
 
-                        {user ? (
+                        {!isMounted ? (
+                            <Box w="100px" /> // Spacer for hydration
+                        ) : user ? (
                             <Menu>
                                 <MenuButton>
                                     <Avatar size="sm" name={user.email || undefined} src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} border="2px solid" borderColor="brand.100" />
@@ -143,6 +147,7 @@ export function Navbar() {
                                 </Link>
                             </HStack>
                         )}
+
 
                         <IconButton
                             display={{ base: "flex", md: "none" }}

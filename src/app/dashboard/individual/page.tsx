@@ -33,9 +33,11 @@ export default function IndividualDashboard() {
         minHeight: "", maxHeight: "",
         radius: "50",
     })
+    const [isMounted, setIsMounted] = useState(false)
     const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null)
 
     useEffect(() => {
+        setIsMounted(true)
         fetchListings()
         if (user) fetchProfile()
         if ("geolocation" in navigator) {
@@ -44,6 +46,8 @@ export default function IndividualDashboard() {
             })
         }
     }, [user])
+
+    if (!isMounted) return null
 
     const fetchProfile = async () => {
         const { data } = await supabase.from('profiles').select('*').eq('id', user!.id).single()
