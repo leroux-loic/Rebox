@@ -2,20 +2,19 @@
 
 import Link from "next/link"
 import { useAuth } from "@/components/auth-provider"
-import { Box, Flex, Button, HStack, VStack, Text, Icon, Menu, MenuButton, MenuList, MenuItem, Avatar, IconButton, useColorModeValue, InputGroup, InputLeftElement, Input, Badge, Container } from "@chakra-ui/react"
+import { Box, Flex, Button, HStack, VStack, Text, Icon, Menu, MenuButton, MenuList, MenuItem, Avatar, IconButton, useColorModeValue, InputGroup, InputLeftElement, Input, Badge, Container, useDisclosure, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, Divider } from "@chakra-ui/react"
 import { LogOut, Package, User, MessageCircle, LayoutDashboard, Search, PlusSquare, Heart, Bell, Menu as MenuIcon } from "lucide-react"
 import { NotificationsMenu } from "@/components/notifications-menu"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 
 export function Navbar() {
     const { user, signOut } = useAuth()
     const pathname = usePathname()
+    const router = useRouter()
+    const { isOpen, onOpen, onClose } = useDisclosure()
     const [role, setRole] = useState<string | null>(null)
-
-    const bg = useColorModeValue('white', 'gray.900')
-    const borderColor = useColorModeValue('gray.100', 'gray.800')
 
     useEffect(() => {
         if (user) {
@@ -34,114 +33,151 @@ export function Navbar() {
         if (data) setRole((data as any).role)
     }
 
+    const handleSignOut = async () => {
+        await signOut()
+        onClose()
+    }
+
+    const bg = "rgba(253, 251, 247, 0.8)" // eco.50 with transparency
+    const borderColor = "eco.100"
+
     return (
         <Box
-            as="nav"
             bg={bg}
-            borderBottom="1px"
-            borderColor={borderColor}
+            backdropFilter="blur(15px)"
             position="sticky"
             top="0"
-            zIndex="999"
-            shadow="sm"
+            zIndex="sticky"
+            borderBottom="1px"
+            borderColor={borderColor}
+            transition="all 0.3s"
         >
-            <Container maxW="container.xl" px={4}>
-                <Flex h={{ base: 16, md: 20 }} alignItems="center" justifyContent="space-between" gap={8}>
-                    {/* Logo Section */}
-                    <Link href="/" passHref>
-                        <HStack spacing={2} cursor="pointer" align="center" role="group">
-                            <Flex bg="brand.500" w={10} h={10} borderRadius="lg" align="center" justify="center" shadow="md">
-                                <Icon as={Package} w={6} h={6} color="white" />
-                            </Flex>
-                            <Box>
-                                <Text fontSize="xl" fontWeight="900" color="brand.600" lineHeight="1">ReBox</Text>
-                                <Text fontSize="xs" fontWeight="medium" color="gray.400" letterSpacing="wide">PRO</Text>
+            <Container maxW="container.xl" py={4}>
+                <Flex justify="space-between" align="center">
+                    {/* Logo */}
+                    <Link href="/">
+                        <HStack spacing={3} _hover={{ transform: "scale(1.02)" }} transition="0.2s">
+                            <Box
+                                bg="brand.600"
+                                p={2}
+                                borderRadius="xl"
+                                shadow="lg"
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="center"
+                            >
+                                <Icon as={Package} color="white" boxSize={6} />
                             </Box>
+                            <Text
+                                fontSize="2xl"
+                                fontWeight="900"
+                                letterSpacing="tighter"
+                                color="brand.900"
+                                display={{ base: "none", sm: "block" }}
+                            >
+                                ReBox
+                            </Text>
                         </HStack>
                     </Link>
 
-                    {/* Desktop: Middle Search Bar */}
-                    <Box display={{ base: "none", lg: "block" }} flex={1} maxW="600px">
-                        <InputGroup size="lg">
-                            <InputLeftElement pointerEvents="none">
-                                <Icon as={Search} color="gray.400" mt={1} />
-                            </InputLeftElement>
-                            <Input
-                                placeholder="Rechercher des cartons, rouleaux, palettes..."
-                                bg="gray.50"
-                                border="1px solid"
-                                borderColor="gray.200"
-                                _focus={{ bg: "white", borderColor: "brand.500", boxShadow: "0 0 0 1px var(--chakra-colors-brand-500)" }}
-                                borderRadius="full"
-                                fontSize="sm"
-                            />
-                        </InputGroup>
-                    </Box>
-
-                    {/* Desktop Actions */}
-                    <HStack spacing={4} display={{ base: "none", md: "flex" }} align="center">
+                    {/* Navigation Desktop */}
+                    <HStack spacing={8} display={{ base: "none", md: "flex" }}>
+                        <Link href="/dashboard/individual">
+                            <Text fontWeight="bold" color="brand.800" _hover={{ color: "brand.500" }} transition="0.2s" fontSize="sm">Acheter</Text>
+                        </Link>
                         <Link href="/dashboard/company/create">
-                            <Button
-                                leftIcon={<PlusSquare size={18} />}
-                                colorScheme="brand"
-                                variant="solid"
-                                size="md"
-                                borderRadius="full"
-                                fontWeight="bold"
-                                px={6}
-                                boxShadow="md"
-                                _hover={{ transform: "translateY(-1px)", boxShadow: "lg" }}
-                            >
-                                Déposer
-                            </Button>
+                            <Text fontWeight="bold" color="brand.800" _hover={{ color: "brand.500" }} transition="0.2s" fontSize="sm">Vendre</Text>
+                        </Link>
+                        <Link href="/pro">
+                            <Text fontWeight="bold" color="brown.600" _hover={{ color: "brown.400" }} transition="0.2s" fontSize="sm">ReBox Pro</Text>
+                        </Link>
+                    </HStack>
+
+                    {/* Actions */}
+                    <HStack spacing={4}>
+                        <Link href="/favorites">
+                            <IconButton
+                                aria-label="Favoris"
+                                icon={<Heart size={20} />}
+                                variant="ghost"
+                                color="brand.700"
+                                _hover={{ bg: "brand.50", color: "brand.500" }}
+                                borderRadius="xl"
+                                display={{ base: "none", sm: "flex" }}
+                            />
                         </Link>
 
-                        <HStack spacing={1}>
-                            <Link href="/favorites">
-                                <IconButton aria-label="Favoris" icon={<Heart size={20} />} variant="ghost" borderRadius="full" color="gray.500" />
-                            </Link>
-                            {user && (
-                                <Link href="/messages">
-                                    <IconButton aria-label="Messages" icon={<MessageCircle size={20} />} variant="ghost" borderRadius="full" color="gray.500" />
-                                </Link>
-                            )}
-                        </HStack>
-
-                        {/* Auth Section */}
                         {user ? (
                             <Menu>
-                                <MenuButton as={Button} variant="ghost" borderRadius="full" p={1} pr={4}>
-                                    <HStack spacing={3}>
-                                        <Avatar size="sm" name={user.email || undefined} src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} />
-                                        <VStack spacing={0} align="start" display={{ base: "none", xl: "flex" }}>
-                                            <Text fontSize="sm" fontWeight="bold">{role === 'company' ? 'Entreprise' : 'Particulier'}</Text>
-                                        </VStack>
-                                    </HStack>
+                                <MenuButton>
+                                    <Avatar size="sm" name={user.email || undefined} src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} border="2px solid" borderColor="brand.100" />
                                 </MenuButton>
-                                <MenuList borderRadius="xl" shadow="lg" p={2}>
-                                    <Link href="/profile">
-                                        <MenuItem borderRadius="md" icon={<Icon as={User} />}>Mon Compte</MenuItem>
-                                    </Link>
-                                    <Link href={role === 'company' ? "/dashboard/company" : "/dashboard/individual"}>
-                                        <MenuItem borderRadius="md" icon={<Icon as={LayoutDashboard} />}>Tableau de Bord</MenuItem>
-                                    </Link>
-                                    <MenuItem borderRadius="md" icon={<Icon as={LogOut} />} onClick={signOut} color="red.500">Se déconnecter</MenuItem>
+                                <MenuList borderRadius="2xl" shadow="2xl" border="1px solid" borderColor="eco.100" p={2}>
+                                    <MenuItem borderRadius="xl" fontWeight="bold" color="brand.800" _hover={{ bg: "brand.50" }} onClick={() => router.push('/profile')}>Profil</MenuItem>
+                                    <MenuItem borderRadius="xl" fontWeight="bold" color="brand.800" _hover={{ bg: "brand.50" }} onClick={() => router.push('/dashboard')}>Dashboard</MenuItem>
+                                    <MenuItem borderRadius="xl" fontWeight="bold" color="red.500" _hover={{ bg: "red.50" }} onClick={handleSignOut}>Déconnexion</MenuItem>
                                 </MenuList>
                             </Menu>
                         ) : (
-                            <Link href="/login">
-                                <Button variant="ghost" leftIcon={<User size={18} />}>Se connecter</Button>
-                            </Link>
+                            <HStack spacing={3}>
+                                <Link href="/login">
+                                    <Button
+                                        variant="ghost"
+                                        colorScheme="brand"
+                                        fontWeight="black"
+                                        borderRadius="xl"
+                                    >
+                                        Connexion
+                                    </Button>
+                                </Link>
+                                <Link href="/signup">
+                                    <Button
+                                        colorScheme="brand"
+                                        px={6}
+                                        borderRadius="xl"
+                                        fontWeight="black"
+                                        boxShadow="0 4px 12px rgba(0, 135, 83, 0.2)"
+                                    >
+                                        Rejoindre
+                                    </Button>
+                                </Link>
+                            </HStack>
                         )}
-                    </HStack>
 
-                    {/* Mobile Menu Icon */}
-                    <HStack display={{ base: "flex", md: "none" }} spacing={2}>
-                        {user && <NotificationsMenu />}
-                        <IconButton aria-label="Menu" icon={<MenuIcon />} variant="ghost" />
+                        <IconButton
+                            display={{ base: "flex", md: "none" }}
+                            aria-label="Menu"
+                            icon={<MenuIcon size={24} />}
+                            variant="ghost"
+                            color="brand.800"
+                            onClick={onOpen}
+                        />
                     </HStack>
                 </Flex>
             </Container>
-        </Box >
+
+            {/* Mobile Sidebar */}
+            <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
+                <DrawerOverlay backdropFilter="blur(5px)" />
+                <DrawerContent bg="eco.50" p={6}>
+                    <DrawerCloseButton mt={4} mr={4} />
+                    <VStack align="start" spacing={8} mt={12}>
+                        <Link href="/dashboard/individual"><Text fontSize="xl" fontWeight="900" color="brand.900" onClick={onClose}>Acheter des cartons</Text></Link>
+                        <Link href="/dashboard/company/create"><Text fontSize="xl" fontWeight="900" color="brand.900" onClick={onClose}>Vendre mes cartons</Text></Link>
+                        <Link href="/favorites"><Text fontSize="xl" fontWeight="900" color="brand.900" onClick={onClose}>Mes Favoris</Text></Link>
+                        <Link href="/pro"><Text fontSize="xl" fontWeight="900" color="brown.700" onClick={onClose}>Espace Professionnels</Text></Link>
+                        <Divider />
+                        {user ? (
+                            <Button w="full" colorScheme="red" variant="ghost" onClick={handleSignOut} fontWeight="black">Déconnexion</Button>
+                        ) : (
+                            <VStack w="full" spacing={4}>
+                                <Link href="/login" style={{ width: '100%' }}><Button w="full" variant="outline" borderColor="brand.500" color="brand.500" h={14} borderRadius="xl" fontWeight="black" onClick={onClose}>Connexion</Button></Link>
+                                <Link href="/signup" style={{ width: '100%' }}><Button w="full" colorScheme="brand" h={14} borderRadius="xl" fontWeight="black" onClick={onClose}>Créer un compte</Button></Link>
+                            </VStack>
+                        )}
+                    </VStack>
+                </DrawerContent>
+            </Drawer>
+        </Box>
     )
 }

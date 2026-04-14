@@ -14,9 +14,10 @@ interface Badge {
 
 interface BadgesListProps {
     badges: Badge[]
+    compact?: boolean
 }
 
-export function BadgesList({ badges }: BadgesListProps) {
+export function BadgesList({ badges, compact }: BadgesListProps) {
     const getIcon = (iconName: string) => {
         switch (iconName) {
             case 'medal': return Medal
@@ -26,21 +27,38 @@ export function BadgesList({ badges }: BadgesListProps) {
         }
     }
 
-    const bg = useColorModeValue('white', 'gray.800')
-    const borderColor = useColorModeValue('gray.200', 'gray.700')
+    if (compact) {
+        return (
+            <HStack spacing={3}>
+                {badges.map((badge) => (
+                    <Box
+                        key={badge.id}
+                        p={2.5}
+                        borderRadius="xl"
+                        bg={badge.unlocked ? "brand.500" : "whiteAlpha.200"}
+                        color={badge.unlocked ? "white" : "whiteAlpha.500"}
+                        opacity={badge.unlocked ? 1 : 0.4}
+                        shadow={badge.unlocked ? "lg" : "none"}
+                    >
+                        <Icon as={getIcon(badge.icon)} w={5} h={5} />
+                    </Box>
+                ))}
+            </HStack>
+        )
+    }
 
     return (
         <Box
-            bg={bg}
+            bg="white"
             p={6}
             borderRadius="xl"
             borderWidth="1px"
-            borderColor={borderColor}
+            borderColor="eco.100"
             shadow="sm"
         >
             <HStack mb={4} spacing={2}>
-                <Icon as={Trophy} color="yellow.500" w={5} h={5} />
-                <Text fontWeight="bold" fontSize="lg">Mes Badges</Text>
+                <Icon as={Trophy} color="brand.500" w={5} h={5} />
+                <Text fontWeight="black" fontSize="lg" color="brand.900">Mes Badges</Text>
             </HStack>
 
             <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
@@ -50,8 +68,8 @@ export function BadgesList({ badges }: BadgesListProps) {
                         p={3}
                         borderRadius="lg"
                         borderWidth="1px"
-                        borderColor={badge.unlocked ? "yellow.200" : "gray.100"}
-                        bg={badge.unlocked ? "yellow.50" : "gray.50"}
+                        borderColor={badge.unlocked ? "brand.100" : "eco.50"}
+                        bg={badge.unlocked ? "brand.50" : "eco.50"}
                         opacity={badge.unlocked ? 1 : 0.6}
                         filter={badge.unlocked ? "none" : "grayscale(100%)"}
                         spacing={2}
@@ -60,13 +78,13 @@ export function BadgesList({ badges }: BadgesListProps) {
                         <Box
                             p={2}
                             borderRadius="full"
-                            bg={badge.unlocked ? "yellow.100" : "gray.200"}
-                            color={badge.unlocked ? "yellow.600" : "gray.400"}
+                            bg={badge.unlocked ? "brand.100" : "eco.200"}
+                            color={badge.unlocked ? "brand.600" : "eco.400"}
                         >
                             <Icon as={getIcon(badge.icon)} w={6} h={6} />
                         </Box>
-                        <Text fontWeight="semibold" fontSize="sm">{badge.name}</Text>
-                        <Text fontSize="xs" color="gray.500">{badge.description}</Text>
+                        <Text fontWeight="black" fontSize="xs" color="brand.900">{badge.name}</Text>
+                        <Text fontSize="10px" color="brown.500" fontWeight="medium">{badge.description}</Text>
                     </VStack>
                 ))}
             </SimpleGrid>

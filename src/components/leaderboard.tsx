@@ -16,9 +16,6 @@ export function Leaderboard({ limit = 10, compact = false }: { limit?: number, c
     const [users, setUsers] = useState<LeaderboardUser[]>([])
     const [loading, setLoading] = useState(true)
 
-    const bg = useColorModeValue('white', 'gray.800')
-    const borderColor = useColorModeValue('gray.200', 'gray.700')
-
     useEffect(() => {
         const fetchLeaderboard = async () => {
             const { data } = await supabase
@@ -39,17 +36,17 @@ export function Leaderboard({ limit = 10, compact = false }: { limit?: number, c
     return (
         <Box
             w="full"
-            bg={compact ? "transparent" : bg}
+            bg={compact ? "transparent" : "white"}
             p={compact ? 0 : 6}
-            borderRadius={compact ? "none" : "xl"}
+            borderRadius={compact ? "none" : "3xl"}
             borderWidth={compact ? 0 : "1px"}
-            borderColor={borderColor}
+            borderColor="eco.100"
             shadow={compact ? "none" : "sm"}
         >
             {!compact && (
                 <HStack mb={4} spacing={2}>
-                    <Icon as={Trophy} color="yellow.500" w={6} h={6} />
-                    <Text fontWeight="bold" fontSize="lg">Classement des Recycleurs</Text>
+                    <Icon as={Trophy} color="brand.500" w={6} h={6} />
+                    <Text fontWeight="black" fontSize="lg" color="brand.900">Classement des Recycleurs</Text>
                 </HStack>
             )}
 
@@ -59,43 +56,44 @@ export function Leaderboard({ limit = 10, compact = false }: { limit?: number, c
                         key={user.id}
                         justify="space-between"
                         p={2}
-                        borderRadius="lg"
-                        _hover={{ bg: "gray.50" }}
-                        transition="background 0.2s"
+                        borderRadius="xl"
+                        _hover={{ bg: "eco.50" }}
+                        transition="all 0.2s"
                     >
                         <HStack spacing={4}>
                             <Center
                                 w={8}
                                 h={8}
                                 borderRadius="full"
-                                fontWeight="bold"
+                                fontWeight="black"
+                                fontSize="sm"
                                 bg={
-                                    index === 0 ? "yellow.100" :
-                                        index === 1 ? "gray.100" :
-                                            index === 2 ? "orange.100" :
-                                                "gray.50"
+                                    index === 0 ? "yellow.400" :
+                                        index === 1 ? "eco.200" :
+                                            index === 2 ? "brown.200" :
+                                                "eco.100"
                                 }
                                 color={
-                                    index === 0 ? "yellow.600" :
-                                        index === 1 ? "gray.600" :
-                                            index === 2 ? "orange.600" :
-                                                "gray.500"
+                                    index === 0 ? "white" :
+                                        index === 1 ? "eco.600" :
+                                            index === 2 ? "brown.600" :
+                                                "eco.500"
                                 }
                             >
                                 {index + 1}
                             </Center>
                             <HStack spacing={3}>
-                                <Avatar size="sm" name={user.company_name} src="" />
+                                <Avatar size="sm" name={user.company_name} src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.company_name}`} />
                                 <Box>
-                                    <Text fontWeight="medium" lineHeight="none">{user.company_name || "Utilisateur"}</Text>
-                                    <Text fontSize="xs" color="gray.500" textTransform="capitalize">
+                                    <Text fontWeight="bold" fontSize="sm" color="brand.900" lineHeight="none">{user.company_name || "Recycleur"}</Text>
+                                    <Text fontSize="10px" color="brown.400" textTransform="capitalize" fontWeight="medium">
                                         {user.role === 'company' ? 'Entreprise' : 'Particulier'}
                                     </Text>
                                 </Box>
                             </HStack>
                         </HStack>
-                        <Text fontWeight="bold" color="brand.600">
-                            {user.carbon_score} <Text as="span" fontSize="xs" fontWeight="normal" color="gray.500">kg</Text>
+                        <Text fontWeight="black" color="brand.600" fontSize="sm">
+                            {user.carbon_score} <Text as="span" fontSize="10px" fontWeight="bold" color="brown.300">kg</Text>
                         </Text>
                     </HStack>
                 ))}

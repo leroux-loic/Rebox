@@ -130,7 +130,7 @@ export default function ProfilePage() {
                             {orders.length === 0 ? (
                                 <Box textAlign="center" py={10}>
                                     <Text color="gray.500">Vous n'avez pas encore de commandes.</Text>
-                                    <Link href="/">
+                                    <Link href="/dashboard/individual">
                                         <Button mt={4} colorScheme="orange" variant="outline">Trouver des cartons</Button>
                                     </Link>
                                 </Box>

@@ -6,6 +6,8 @@ import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
 import { Providers } from "./providers";
 
+import { Footer } from "@/components/footer";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -24,9 +26,12 @@ export default function RootLayout({
         <Providers>
           <AuthProvider>
             <Navbar />
-            <div className="flex-1 pb-16 md:pb-0">
-              {children}
-            </div>
+            <main className="min-h-screen flex flex-col">
+              <div className="flex-1">
+                {children}
+              </div>
+              <Footer />
+            </main>
             <BottomNav />
           </AuthProvider>
         </Providers>

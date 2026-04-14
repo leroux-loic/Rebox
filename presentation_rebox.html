@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReBoX - Présentation Orale</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #008753;
+            --primary-light: #00a86b;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+        }
+
+        header {
+            height: 40vh;
+            background: linear-gradient(135deg, rgba(0, 135, 83, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%),
+                        url('https://images.unsplash.com/photo-1589793907316-f940155a1834?auto=format&fit=crop&q=80&w=1600') center/cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.5rem;
+            color: var(--primary-light);
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: -50px auto 4rem;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        section {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            padding: 3rem;
+            border-radius: 24px;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--primary-light);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            margin: 1.5rem 0 1rem;
+            color: var(--accent);
+        }
+
+        ul {
+            list-style: none;
+            margin-left: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+        }
+
+        li::before {
+            content: "→";
+            color: var(--primary-light);
+            font-weight: bold;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .qa-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .qa-card strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .flashcard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .flashcard {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease;
+        }
+
+        .flashcard:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .flashcard h4 {
+            color: var(--primary-light);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tip-box {
+            background: rgba(0, 135, 83, 0.1);
+            border: 1px dashed var(--primary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            color: var(--primary-light);
+            font-weight: 500;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            header h1 { font-size: 2.5rem; }
+            section { padding: 1.5rem; }
+            .container { margin-top: -20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>📦 ReBoX</h1>
+        <p>Donnez une seconde vie aux cartons.</p>
+    </header>
+
+    <div class="container">
+        <!-- Introduction -->
+        <section id="intro">
+            <h2><i data-lucide="info"></i> 1. Introduction</h2>
+            <p>Ce document contient tous les éléments nécessaires pour présenter le projet <strong>ReBoX</strong> lors d'une soutenance ou d'une présentation publique.</p>
+            
+            <h3>🎯 Le Problème</h3>
+            <ul>
+                <li><strong>Gaspillage :</strong> Les entreprises paient pour recycler des cartons encore utilisables.</li>
+                <li><strong>Coût :</strong> Les particuliers paient cher des cartons neufs pour leurs besoins ponctuels.</li>
+                <li><strong>Impact Éco :</strong> Le recyclage consomme de l'énergie ; le réemploi est bien plus vertueux.</li>
+            </ul>
+
+            <h3>💡 La Solution ReBoX</h3>
+            <p>ReBoX est une <strong>marketplace écologique, économique et locale</strong> dédiée au marché de la seconde main du carton.</p>
+            <ul>
+                <li><strong>Le concept :</strong> Le "Vinted" du carton d'emballage.</li>
+                <li><strong>L'ambition :</strong> Créer un circuit court entre les producteurs de surplus et les demandeurs.</li>
+            </ul>
+        </section>
+
+        <!-- Fonctionnel -->
+        <section id="features">
+            <h2><i data-lucide="layout"></i> 2. Démonstration Fonctionnelle</h2>
+            
+            <h3>🗺️ Recherche Géolocalisée</h3>
+            <p>Visualisation sur une <strong>carte interactive</strong> (Leaflet) pour favoriser le circuit ultra-court et réduire l'empreinte carbone.</p>
+            
+            <h3>💳 Transactions Sécurisées</h3>
+            <p>Intégration de <strong>Stripe</strong> pour des paiements professionnels et sécurisés.</p>
+
+            <h3>🏆 Gamification</h3>
+            <ul>
+                <li>Badge "Écolo" pour les dons.</li>
+                <li>Badge "Super Vendeur" pour la fiabilité.</li>
+                <li>Classement (Leaderboard) communautaire.</li>
+            </ul>
+        </section>
+
+        <!-- Technique -->
+        <section id="tech">
+            <h2><i data-lucide="cpu"></i> 3. Expertise Technique</h2>
+            
+            <h3>🏗️ Architecture BaaS (Supabase)</h3>
+            <div class="mermaid">
+                graph TD
+                    Client[Client Browser / Mobile App]
+                    NextJS[Next.js App Router]
+                    SupabaseDB[(PostgreSQL)]
+                    SupabaseAuth[Supabase Auth]
+                    SupabaseStorage[Supabase Storage]
+                    StripeAPI[Stripe API]
+                    Leaflet[Leaflet Maps]
+
+                    Client <--> NextJS
+                    NextJS <--> SupabaseAuth
+                    NextJS <--> SupabaseDB
+                    NextJS <--> SupabaseStorage
+                    NextJS <--> StripeAPI
+                    Client <--> Leaflet
+            </div>
+
+            <h3>💻 Stack Logicielle</h3>
+            <ul>
+                <li><strong>Frontend :</strong> Next.js 14, TypeScript, React Server Components.</li>
+                <li><strong>UI :</strong> Chakra UI & Tailwind CSS (Design Premium).</li>
+                <li><strong>Mobile :</strong> Capacitor (iOS/Android Ready).</li>
+                <li><strong>Infra :</strong> Docker & Dokploy (CI/CD).</li>
+            </ul>
+        </section>
+
+        <!-- Q&A -->
+        <section id="qa">
+            <h2><i data-lucide="help-circle"></i> 4. Préparation aux Questions</h2>
+            
+            <div class="qa-card">
+                <strong>Pourquoi Supabase ?</strong>
+                <p>Rapidité de mise en place. Auth, Storage et WebSockets intégrés pour se concentrer sur le métier.</p>
+            </div>
+            
+            <div class="qa-card">
+                <strong>Sécurité des paiements ?</strong>
+                <p>Utilisation de Stripe Checkout. Aucune donnée bancaire sur nos serveurs.</p>
+            </div>
+
+            <div class="qa-card">
+                <strong>Vraiment mobile ?</strong>
+                <p>Oui, Capacitor permet de compiler le code web en application native APK/IPA.</p>
+            </div>
+        </section>
+
+        <!-- Flashcards -->
+        <section id="flashcards">
+            <h2><i data-lucide="zap"></i> 5. Aide-Mémoire (Flashcards)</h2>
+            <div class="flashcard-grid">
+                <div class="flashcard">
+                    <h4><i data-lucide="message-square"></i> Intro (1 min)</h4>
+                    <p>"Saviez-vous qu'on jette des millions de cartons chaque jour ? ReBoX est la solution."</p>
+                </div>
+                <div class="flashcard">
+                    <h4><i data-lucide="code"></i> Tech (2 min)</h4>
+                    <p>Next.js 14 pour la vitesse, Supabase pour le backend, Capacitor pour le mobile.</p>
+                </div>
+                <div class="flashcard">
+                    <h4><i data-lucide="settings"></i> Setup (1 min)</h4>
+                    <p>Environnement Docker, déploiement automatisé avec Dokploy.</p>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                💡 Conseil : Montrez l'interface sur mobile pour impressionner le jury !
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>Généré par Antigravity pour la soutenance ReBoX &bull; 2026</p>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+</body>
+</html>
